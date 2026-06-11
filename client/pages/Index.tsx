@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const NAV_ITEMS = ["home", "transaction", "add", "budget", "analytics"] as const;
