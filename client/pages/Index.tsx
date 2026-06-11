@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const NAV_ITEMS = ["home", "transaction", "add", "budget", "analytics"] as const;
@@ -234,6 +235,8 @@ function StatsRow() {
 
 /* ─────────────────── Spending Chart ─────────────────── */
 function SpendingChart() {
+  const [isDetailedView, setIsDetailedView] = useState(false);
+
   return (
     <div
       className="rounded-[10px] bg-white p-5 pt-5"
@@ -250,98 +253,126 @@ function SpendingChart() {
         >
           Spending by Category
         </h3>
-        <span
+        <button
+          onClick={() => setIsDetailedView(!isDetailedView)}
           style={{ fontFamily: "Inter, sans-serif" }}
-          className="text-[10.5px] font-medium text-[#030213] bg-[#ECEEF2] rounded-[6.75px] px-2 py-0.5"
+          className="text-[10.5px] font-medium text-[#030213] bg-[#ECEEF2] hover:bg-[#DDD4DA] rounded-[6.75px] px-2 py-0.5 cursor-pointer transition-colors"
         >
-          April 2026
-        </span>
+          {isDetailedView ? "Donut View" : "Detailed View"}
+        </button>
       </div>
 
-      {/* Chart + legend */}
-      <div className="flex items-center gap-4">
-        {/* SVG donut chart */}
-        <div className="shrink-0">
-          <svg
-            width="180"
-            height="180"
-            viewBox="0 0 215 215"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <g clipPath="url(#clip-chart)">
-              <path
-                d="M107.5 0C130.202 0 152.321 7.18691 170.687 20.5307C189.053 33.8744 202.723 52.69 209.739 74.2807C216.754 95.8713 216.754 119.129 209.739 140.719C202.723 162.31 189.053 181.126 170.687 194.469L159.673 179.31C174.837 168.292 186.125 152.756 191.917 134.929C197.71 117.102 197.71 97.8983 191.917 80.0712C186.125 62.244 174.837 46.7082 159.673 35.6905C144.508 24.6727 126.245 18.7385 107.5 18.7385V0Z"
-                fill="#FB2C36"
-                stroke="white"
-              />
-              <path
-                d="M170.687 194.469C148.567 210.541 121.153 217.579 94.0267 214.152C66.9 210.725 42.0985 197.091 24.6698 176.023L39.1081 164.079C53.4987 181.474 73.9771 192.732 96.3752 195.562C118.773 198.391 141.408 192.579 159.673 179.31L170.687 194.469Z"
-                fill="#2B7FFF"
-                stroke="white"
-              />
-              <path
-                d="M24.6698 176.023C11.6668 160.305 3.40439 141.212 0.847672 120.973C-1.70905 100.735 1.54547 80.1866 10.2311 61.7287L27.1862 69.7072C20.0146 84.9476 17.3274 101.914 19.4384 118.625C21.5495 135.335 28.3717 151.101 39.1081 164.079L24.6698 176.023Z"
-                fill="#00C950"
-                stroke="white"
-              />
-              <path
-                d="M10.2311 61.7287C21.8729 36.9887 42.5044 17.6144 67.9266 7.54901L74.8247 24.9717C53.8339 33.2825 36.7987 49.2796 27.1862 69.7072L10.2311 61.7287Z"
-                fill="#F0B100"
-                stroke="white"
-              />
-              <path
-                d="M67.9266 7.54903C80.5241 2.56131 93.951 0 107.5 0V18.7385C96.3128 18.7385 85.2264 20.8534 74.8247 24.9717L67.9266 7.54903Z"
-                fill="#99A1AF"
-                stroke="white"
-              />
-              <text
-                fill="black"
-                style={{ whiteSpace: "pre" }}
-                fontFamily="Inter"
-                fontSize="26"
-                fontWeight="600"
-                letterSpacing="-0.02em"
-              >
-                <tspan x="57" y="118">
-                  €4,678
-                </tspan>
-              </text>
-            </g>
-            <defs>
-              <clipPath id="clip-chart">
-                <rect width="215" height="215" fill="white" />
-              </clipPath>
-            </defs>
-          </svg>
-        </div>
-
-        {/* Legend */}
-        <div className="flex flex-col gap-4 justify-center">
-          {chartSegments.map((seg) => (
-            <div key={seg.color} className="flex items-center gap-2.5">
-              <div
-                className="w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ background: seg.color }}
-              />
-              <div className="flex flex-col">
-                <span
-                  style={{ fontFamily: "Inter, sans-serif" }}
-                  className="text-[12px] font-medium text-[#364153] leading-none"
+      {/* Chart + legend or detailed breakdown */}
+      {!isDetailedView ? (
+        <div className="flex items-center gap-4">
+          {/* SVG donut chart */}
+          <div className="shrink-0">
+            <svg
+              width="180"
+              height="180"
+              viewBox="0 0 215 215"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g clipPath="url(#clip-chart)">
+                <path
+                  d="M107.5 0C130.202 0 152.321 7.18691 170.687 20.5307C189.053 33.8744 202.723 52.69 209.739 74.2807C216.754 95.8713 216.754 119.129 209.739 140.719C202.723 162.31 189.053 181.126 170.687 194.469L159.673 179.31C174.837 168.292 186.125 152.756 191.917 134.929C197.71 117.102 197.71 97.8983 191.917 80.0712C186.125 62.244 174.837 46.7082 159.673 35.6905C144.508 24.6727 126.245 18.7385 107.5 18.7385V0Z"
+                  fill="#FB2C36"
+                  stroke="white"
+                />
+                <path
+                  d="M170.687 194.469C148.567 210.541 121.153 217.579 94.0267 214.152C66.9 210.725 42.0985 197.091 24.6698 176.023L39.1081 164.079C53.4987 181.474 73.9771 192.732 96.3752 195.562C118.773 198.391 141.408 192.579 159.673 179.31L170.687 194.469Z"
+                  fill="#2B7FFF"
+                  stroke="white"
+                />
+                <path
+                  d="M24.6698 176.023C11.6668 160.305 3.40439 141.212 0.847672 120.973C-1.70905 100.735 1.54547 80.1866 10.2311 61.7287L27.1862 69.7072C20.0146 84.9476 17.3274 101.914 19.4384 118.625C21.5495 135.335 28.3717 151.101 39.1081 164.079L24.6698 176.023Z"
+                  fill="#00C950"
+                  stroke="white"
+                />
+                <path
+                  d="M10.2311 61.7287C21.8729 36.9887 42.5044 17.6144 67.9266 7.54901L74.8247 24.9717C53.8339 33.2825 36.7987 49.2796 27.1862 69.7072L10.2311 61.7287Z"
+                  fill="#F0B100"
+                  stroke="white"
+                />
+                <path
+                  d="M67.9266 7.54903C80.5241 2.56131 93.951 0 107.5 0V18.7385C96.3128 18.7385 85.2264 20.8534 74.8247 24.9717L67.9266 7.54903Z"
+                  fill="#99A1AF"
+                  stroke="white"
+                />
+                <text
+                  fill="black"
+                  style={{ whiteSpace: "pre" }}
+                  fontFamily="Inter"
+                  fontSize="26"
+                  fontWeight="600"
+                  letterSpacing="-0.02em"
                 >
-                  {seg.pct}
-                </span>
+                  <tspan x="57" y="118">
+                    €4,678
+                  </tspan>
+                </text>
+              </g>
+              <defs>
+                <clipPath id="clip-chart">
+                  <rect width="215" height="215" fill="white" />
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-col gap-4 justify-center">
+            {chartSegments.map((seg) => (
+              <div key={seg.color} className="flex items-center gap-2.5">
+                <div
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ background: seg.color }}
+                />
+                <div className="flex flex-col">
+                  <span
+                    style={{ fontFamily: "Inter, sans-serif" }}
+                    className="text-[12px] font-medium text-[#364153] leading-none"
+                  >
+                    {seg.pct}
+                  </span>
+                  <span
+                    style={{ fontFamily: "Inter, sans-serif" }}
+                    className="text-[10px] text-[#6A7282] leading-none mt-0.5"
+                  >
+                    {seg.label}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {chartSegments.map((seg) => (
+            <div key={seg.label} className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-3 h-3 rounded-full shrink-0"
+                  style={{ background: seg.color }}
+                />
                 <span
                   style={{ fontFamily: "Inter, sans-serif" }}
-                  className="text-[10px] text-[#6A7282] leading-none mt-0.5"
+                  className="text-[13px] font-medium text-[#364153]"
                 >
                   {seg.label}
                 </span>
               </div>
+              <span
+                style={{ fontFamily: "Inter, sans-serif" }}
+                className="text-[13px] font-semibold text-[#101828]"
+              >
+                {seg.pct}
+              </span>
             </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }
