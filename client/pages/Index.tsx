@@ -35,34 +35,71 @@ const stats = [
   },
 ];
 
+type TxItem = {
+  id: number;
+  name: string;
+  category: string;
+  amount: number;
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Groceries: "#1B4332",
+  Electronics: "#40916C",
+  Restaurant: "#FB2C36",
+  Transportation: "#2B7FFF",
+  Subscription: "#F0B100",
+  Other: "#99A1AF",
+};
+
+const CATEGORIES = Object.keys(CATEGORY_COLORS);
+
 const transactions = [
   {
     icon: "🛒",
     name: "Kaufland",
     category: "Groceries",
     date: "Today",
+    fullDate: "April 17, 2026",
     amount: "-€67.45",
+    items: [
+      { id: 1, name: "Onion", category: "Groceries", amount: 2.70 },
+      { id: 2, name: "MacBook Pro", category: "Electronics", amount: 36.00 },
+      { id: 3, name: "Bread", category: "Groceries", amount: 28.75 },
+    ] as TxItem[],
   },
   {
     icon: "☕",
     name: "Starbucks",
     category: "Restaurant",
     date: "Today",
+    fullDate: "April 17, 2026",
     amount: "-€12.50",
+    items: [
+      { id: 4, name: "Cappuccino", category: "Restaurant", amount: 5.50 },
+      { id: 5, name: "Croissant", category: "Groceries", amount: 7.00 },
+    ] as TxItem[],
   },
   {
     icon: "🚗",
     name: "Uber",
     category: "Transportation",
     date: "Today",
+    fullDate: "April 17, 2026",
     amount: "-€18.75",
+    items: [
+      { id: 6, name: "Airport Ride", category: "Transportation", amount: 18.75 },
+    ] as TxItem[],
   },
   {
     icon: "📱",
     name: "Netflix",
     category: "Subscription",
     date: "Yesterday",
+    fullDate: "April 16, 2026",
     amount: "-€15.99",
+    items: [
+      { id: 7, name: "Monthly Plan", category: "Subscription", amount: 15.99 },
+    ] as TxItem[],
   },
 ];
 
@@ -76,6 +113,36 @@ const chartSegments = [
 
 export default function Index() {
   const [activeNav, setActiveNav] = useState<NavItem>("home");
+  const [selectedTxIdx, setSelectedTxIdx] = useState<number | null>(null);
+  const [txItemsMap, setTxItemsMap] = useState<Record<number, TxItem[]>>(
+    Object.fromEntries(transactions.map((tx, i) => [i, tx.items]))
+  );
+  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [addForm, setAddForm] = useState({ name: "", amount: "", category: "Groceries" });
+
+  const selectedTx = selectedTxIdx !== null ? transactions[selectedTxIdx] : null;
+  const currentItems = selectedTxIdx !== null ? (txItemsMap[selectedTxIdx] ?? []) : [];
+
+  const handleAddItem = () => {
+    if (!addForm.name || !addForm.amount || selectedTxIdx === null) return;
+    const newItem: TxItem = {
+      id: Date.now(),
+      name: addForm.name,
+      category: addForm.category,
+      amount: parseFloat(addForm.amount),
+    };
+    setTxItemsMap(prev => ({ ...prev, [selectedTxIdx]: [...(prev[selectedTxIdx] ?? []), newItem] }));
+    setAddForm({ name: "", amount: "", category: "Groceries" });
+    setIsAddItemOpen(false);
+  };
+
+  const handleDeleteItem = (id: number) => {
+    if (selectedTxIdx === null) return;
+    setTxItemsMap(prev => ({
+      ...prev,
+      [selectedTxIdx]: prev[selectedTxIdx].filter(i => i.id !== id),
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -107,12 +174,31 @@ export default function Index() {
 
           {/* Recent Transactions */}
           <div className="px-5 mt-9">
-            <RecentTransactions />
+            <RecentTransactions onTxClick={(idx) => setSelectedTxIdx(idx)} />
           </div>
         </div>
 
         {/* Bottom Nav */}
         <BottomNav active={activeNav} onSelect={setActiveNav} />
+
+        {/* Transaction Detail Bottom Sheet */}
+        <TransactionDetailSheet
+          tx={selectedTx}
+          items={currentItems}
+          onClose={() => setSelectedTxIdx(null)}
+          onAddItem={() => setIsAddItemOpen(true)}
+          onDeleteItem={handleDeleteItem}
+        />
+
+        {/* Add Item Modal */}
+        {isAddItemOpen && (
+          <AddItemModal
+            form={addForm}
+            onChange={setAddForm}
+            onAdd={handleAddItem}
+            onCancel={() => setIsAddItemOpen(false)}
+          />
+        )}
       </div>
     </div>
   );
@@ -335,7 +421,7 @@ function SpendingChart() {
 }
 
 /* ─────────────────── Recent Transactions ─────────────────── */
-function RecentTransactions() {
+function RecentTransactions({ onTxClick }: { onTxClick: (idx: number) => void }) {
   return (
     <div className="flex flex-col gap-3">
       {/* Section header */}
@@ -356,8 +442,8 @@ function RecentTransactions() {
 
       {/* Transaction items */}
       <div className="flex flex-col gap-2.5">
-        {transactions.map((tx) => (
-          <TransactionRow key={tx.name + tx.date} tx={tx} />
+        {transactions.map((tx, idx) => (
+          <TransactionRow key={tx.name + tx.date} tx={tx} onClick={() => onTxClick(idx)} />
         ))}
       </div>
     </div>
@@ -366,11 +452,16 @@ function RecentTransactions() {
 
 function TransactionRow({
   tx,
+  onClick,
 }: {
   tx: (typeof transactions)[number];
+  onClick: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3.5 bg-[#F9FAFB] rounded-[12.75px] px-2.5 py-2.5">
+    <div
+      onClick={onClick}
+      className="flex items-center gap-3.5 bg-[#F9FAFB] rounded-[12.75px] px-2.5 py-2.5 cursor-pointer active:opacity-70 transition-opacity"
+    >
       {/* Icon */}
       <div
         className="w-9 h-9 rounded-[12.75px] bg-white flex items-center justify-center shrink-0"
