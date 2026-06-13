@@ -533,84 +533,75 @@ function TransactionDetailSheet({
   );
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+  const categories = Object.entries(categoryBreakdown).sort((a, b) => b[1] - a[1]);
 
   return (
-    <>
+    <div
+      className="fixed inset-0 z-50 pointer-events-none"
+      style={{ pointerEvents: tx ? "auto" : "none" }}
+    >
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/30 z-40 transition-opacity"
+        className="absolute inset-0 bg-black/40 transition-opacity duration-300"
         style={{ opacity: tx ? 1 : 0, pointerEvents: tx ? "auto" : "none" }}
       />
 
       {/* Bottom Sheet */}
       <div
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm bg-white rounded-t-3xl shadow-2xl z-50 transition-transform duration-300 overflow-hidden flex flex-col max-h-[80vh]"
+        className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-sm bg-white rounded-t-[28px] shadow-xl transition-transform duration-300 flex flex-col max-h-[75vh] overflow-hidden"
         style={{
           transform: tx ? "translateY(0)" : "translateY(100%)",
           width: "min(375px, 100vw)",
+          boxShadow: "0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px 0 rgba(0, 0, 0, 0.30)",
         }}
       >
-        {/* Handle bar */}
-        <div className="flex justify-center pt-3 pb-4 shrink-0">
-          <div className="w-10 h-1 bg-gray-300 rounded-full" />
-        </div>
-
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700 z-10"
-        >
-          ✕
-        </button>
-
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-5 pb-5">
-          {/* Store name & amount */}
-          <div className="mb-6">
-            <h2
-              style={{ fontFamily: "Arimo, sans-serif" }}
-              className="text-2xl font-bold text-[#101828]"
-            >
+        {/* Header */}
+        <div className="flex flex-col items-center gap-3 px-4 pt-4 pb-2 shrink-0">
+          {/* Drag handle */}
+          <div className="w-8 h-1 bg-[#79747E] rounded-full" />
+          {/* Title + Close */}
+          <div className="flex items-center justify-between w-full">
+            <h2 style={{ fontFamily: "Arimo, sans-serif" }} className="text-xl font-bold text-[#0A0A0A]">
               {tx.name}
             </h2>
-            <p
-              style={{ fontFamily: "Arimo, sans-serif" }}
-              className="text-sm text-gray-500 mt-1"
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F3F4F6] hover:bg-gray-300"
             >
-              {tx.fullDate}
-            </p>
-            <p
-              style={{ fontFamily: "Arimo, sans-serif" }}
-              className="text-3xl font-bold text-[#101828] mt-4"
-            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M15 5L5 15" stroke="#0A0A0A" strokeWidth="1.67" strokeLinecap="round" />
+                <path d="M5 5L15 15" stroke="#0A0A0A" strokeWidth="1.67" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto px-5">
+          {/* Amount + Date */}
+          <div className="border-b border-gray-200 py-6">
+            <h3 style={{ fontFamily: "Arimo, sans-serif" }} className="text-3xl font-bold text-[#000] text-center">
               €{totalAmount.toFixed(2)}
+            </h3>
+            <p style={{ fontFamily: "Arimo, sans-serif" }} className="text-sm text-[#6A7282] text-center mt-2">
+              {tx.fullDate}
             </p>
           </div>
 
-          {/* Category Breakdown Pie Chart */}
-          {Object.keys(categoryBreakdown).length > 0 && (
-            <div className="mb-8 bg-gray-50 rounded-lg p-4">
-              <h3
-                style={{ fontFamily: "Inter, sans-serif" }}
-                className="text-sm font-semibold text-[#101828] mb-4"
-              >
+          {/* Category Breakdown */}
+          {categories.length > 0 && (
+            <div className="bg-[#F9FAFB] rounded-xl p-4 my-6">
+              <h3 style={{ fontFamily: "Arimo, sans-serif" }} className="text-sm font-bold text-[#0A0A0A] mb-4">
                 Category Breakdown
               </h3>
-              <div className="flex items-center gap-4">
-                <PieChart data={categoryBreakdown} size={100} />
-                <div className="flex flex-col gap-2 flex-1">
-                  {Object.entries(categoryBreakdown).map(([cat, amount]) => (
-                    <div key={cat} className="flex items-center gap-2">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{ background: CATEGORY_COLORS[cat] || "#99A1AF" }}
-                      />
-                      <span
-                        style={{ fontFamily: "Inter, sans-serif" }}
-                        className="text-xs text-gray-600"
-                      >
-                        {cat}: €{amount.toFixed(2)}
+              <div className="flex items-center gap-4 justify-center">
+                <PieChart data={categoryBreakdown} size={120} />
+                <div className="flex flex-col gap-1 text-center">
+                  {categories.map(([cat, amount]) => (
+                    <div key={cat} className="text-xs">
+                      <span style={{ fontFamily: "Inter, sans-serif" }} className="text-[#1E5128]">
+                        {cat} {Math.round((amount / totalAmount) * 100)}%
                       </span>
                     </div>
                   ))}
@@ -619,62 +610,69 @@ function TransactionDetailSheet({
             </div>
           )}
 
-          {/* Items list */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3
-                style={{ fontFamily: "Inter, sans-serif" }}
-                className="text-sm font-semibold text-[#101828]"
-              >
+          {/* Items List */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 style={{ fontFamily: "Arimo, sans-serif" }} className="text-base font-bold text-[#0A0A0A]">
                 Items
               </h3>
               <button
                 onClick={onAddItem}
-                className="text-brand-green text-sm font-semibold hover:opacity-80"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#1E5128] text-white rounded-lg text-sm font-medium hover:opacity-90"
               >
-                + Add
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3.33337 8H12.6667" stroke="white" strokeWidth="1.33" strokeLinecap="round" />
+                  <path d="M8 3.3335V12.6668" stroke="white" strokeWidth="1.33" strokeLinecap="round" />
+                </svg>
+                Add
               </button>
             </div>
 
             <div className="flex flex-col gap-2">
               {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 bg-gray-50 rounded-lg p-3"
-                >
+                <div key={item.id} className="flex items-center justify-between bg-[#F9FAFB] rounded-lg p-3">
                   <div className="flex-1">
-                    <p
-                      style={{ fontFamily: "Inter, sans-serif" }}
-                      className="text-sm font-medium text-[#101828]"
-                    >
+                    <p style={{ fontFamily: "Inter, sans-serif" }} className="text-sm font-medium text-[#000]">
                       {item.name}
                     </p>
-                    <p
-                      style={{ fontFamily: "Inter, sans-serif" }}
-                      className="text-xs text-gray-500"
-                    >
+                    <p style={{ fontFamily: "Arimo, sans-serif" }} className="text-xs text-[#6A7282]">
                       {item.category}
                     </p>
                   </div>
-                  <p
-                    style={{ fontFamily: "Arimo, sans-serif" }}
-                    className="text-sm font-semibold text-[#101828]"
-                  >
+                  <p style={{ fontFamily: "Arimo, sans-serif" }} className="text-sm font-bold text-[#000] mx-3">
                     €{item.amount.toFixed(2)}
                   </p>
-                  <button
-                    onClick={() => onDeleteItem(item.id)}
-                    className="text-gray-400 hover:text-red-500 text-lg"
-                  >
-                    🗑
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onAddItem()}
+                      className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100"
+                      title="Edit"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M14.116 4.54126C14.4685 4.18888 14.6665 3.71091 14.6666 3.2125C14.6666 2.71409 14.4687 2.23607 14.1163 1.8836C13.7639 1.53112 13.286 1.33307 12.7876 1.33301C12.2892 1.33295 11.8111 1.53088 11.4587 1.88326L2.56133 10.7826C2.40654 10.9369 2.29207 11.127 2.228 11.3359L1.34733 14.2373C1.3301 14.2949 1.3288 14.3562 1.34356 14.4145C1.35833 14.4728 1.38861 14.5261 1.43119 14.5686C1.47378 14.6111 1.52708 14.6413 1.58544 14.656C1.64379 14.6707 1.70504 14.6693 1.76266 14.6519L4.66466 13.7719C4.87344 13.7084 5.06345 13.5947 5.218 13.4406L14.116 4.54126Z" stroke="#4A5565" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M10 3.3335L12.6667 6.00016" stroke="#4A5565" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => onDeleteItem(item.id)}
+                      className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-red-50"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 4H14" stroke="#E7000B" strokeWidth="1.33" strokeLinecap="round" />
+                        <path d="M12.6667 4V13.3333C12.6667 14 12 14.6667 11.3334 14.6667H4.66671C4.00004 14.6667 3.33337 14 3.33337 13.3333V4" stroke="#E7000B" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M5.33337 4.00016V2.66683C5.33337 2.00016 6.00004 1.3335 6.66671 1.3335H9.33337C10 1.3335 10.6667 2.00016 10.6667 2.66683V4.00016" stroke="#E7000B" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M6.66663 7.3335V11.3335" stroke="#E7000B" strokeWidth="1.33" strokeLinecap="round" />
+                        <path d="M9.33337 7.3335V11.3335" stroke="#E7000B" strokeWidth="1.33" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -691,118 +689,109 @@ function AddItemModal({
   onCancel: () => void;
 }) {
   return (
-    <>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={onCancel}
+    >
       {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Modal */}
       <div
-        onClick={onCancel}
-        className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center"
+        onClick={(e) => e.stopPropagation()}
+        className="relative bg-white rounded-2xl p-6 shadow-xl max-w-sm w-11/12"
+        style={{ width: "min(320px, calc(100vw - 56px))" }}
       >
-        {/* Modal */}
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="w-full sm:w-96 bg-white rounded-t-3xl sm:rounded-lg p-6 shadow-2xl"
-          style={{ width: "min(375px, 100vw)" }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2
-              style={{ fontFamily: "Inter, sans-serif" }}
-              className="text-lg font-semibold text-[#101828]"
-            >
-              Add Item
-            </h2>
-            <button
-              onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-            >
-              ✕
-            </button>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 style={{ fontFamily: "Arimo, sans-serif" }} className="text-lg font-bold text-[#0A0A0A]">
+            Add Item
+          </h2>
+          <button
+            onClick={onCancel}
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-[#F3F4F6] hover:bg-gray-300"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M12 4L4 12" stroke="#0A0A0A" strokeWidth="1.33" strokeLinecap="round" />
+              <path d="M4 4L12 12" stroke="#0A0A0A" strokeWidth="1.33" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Form */}
+        <div className="flex flex-col gap-4 mb-6">
+          {/* Item Name */}
+          <div>
+            <label style={{ fontFamily: "Inter, sans-serif" }} className="text-sm font-medium text-[#364153] block mb-2">
+              Item Name
+            </label>
+            <input
+              type="text"
+              placeholder="Enter item name"
+              value={form.name}
+              onChange={(e) => onChange({ ...form, name: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D1D5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E5128]"
+              style={{ fontFamily: "Arimo, sans-serif", fontSize: "14px" }}
+            />
           </div>
 
-          {/* Form */}
-          <div className="flex flex-col gap-4 mb-6">
-            {/* Item Name */}
-            <div>
-              <label
-                style={{ fontFamily: "Inter, sans-serif" }}
-                className="text-sm font-medium text-[#101828] block mb-2"
-              >
-                Item Name
-              </label>
-              <input
-                type="text"
-                placeholder="Enter item name"
-                value={form.name}
-                onChange={(e) => onChange({ ...form, name: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-                style={{ fontFamily: "Inter, sans-serif" }}
-              />
-            </div>
-
-            {/* Amount */}
-            <div>
-              <label
-                style={{ fontFamily: "Inter, sans-serif" }}
-                className="text-sm font-medium text-[#101828] block mb-2"
-              >
-                Amount (€)
-              </label>
-              <input
-                type="number"
-                placeholder="0.00"
-                value={form.amount}
-                onChange={(e) => onChange({ ...form, amount: e.target.value })}
-                step="0.01"
-                min="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-                style={{ fontFamily: "Inter, sans-serif" }}
-              />
-            </div>
-
-            {/* Category */}
-            <div>
-              <label
-                style={{ fontFamily: "Inter, sans-serif" }}
-                className="text-sm font-medium text-[#101828] block mb-2"
-              >
-                Category
-              </label>
-              <select
-                value={form.category}
-                onChange={(e) => onChange({ ...form, category: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-                style={{ fontFamily: "Inter, sans-serif" }}
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Amount */}
+          <div>
+            <label style={{ fontFamily: "Inter, sans-serif" }} className="text-sm font-medium text-[#364153] block mb-2">
+              Amount (€)
+            </label>
+            <input
+              type="number"
+              placeholder="0.00"
+              value={form.amount}
+              onChange={(e) => onChange({ ...form, amount: e.target.value })}
+              step="0.01"
+              min="0"
+              className="w-full px-3 py-2 border border-[#D1D5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E5128]"
+              style={{ fontFamily: "Arimo, sans-serif", fontSize: "14px" }}
+            />
           </div>
 
-          {/* Buttons */}
-          <div className="flex gap-3">
-            <button
-              onClick={onCancel}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-              style={{ fontFamily: "Inter, sans-serif" }}
+          {/* Category */}
+          <div>
+            <label style={{ fontFamily: "Inter, sans-serif" }} className="text-sm font-medium text-[#364153] block mb-2">
+              Category
+            </label>
+            <select
+              value={form.category}
+              onChange={(e) => onChange({ ...form, category: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D1D5DC] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E5128]"
+              style={{ fontFamily: "Arimo, sans-serif", fontSize: "14px" }}
             >
-              Cancel
-            </button>
-            <button
-              onClick={onAdd}
-              disabled={!form.name || !form.amount}
-              className="flex-1 px-4 py-2 bg-brand-green text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-              style={{ fontFamily: "Inter, sans-serif" }}
-            >
-              Add
-            </button>
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
+
+        {/* Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 border border-[#D1D5DC] text-[#364153] rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onAdd}
+            disabled={!form.name || !form.amount}
+            className="flex-1 px-4 py-2 bg-[#1E5128] text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            Add
+          </button>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
