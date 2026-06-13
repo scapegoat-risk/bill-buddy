@@ -508,6 +508,355 @@ function TransactionRow({
   );
 }
 
+/* ─────────────────── Transaction Detail Bottom Sheet ─────────────────── */
+function TransactionDetailSheet({
+  tx,
+  items,
+  onClose,
+  onAddItem,
+  onDeleteItem,
+}: {
+  tx: (typeof transactions)[number] | null;
+  items: TxItem[];
+  onClose: () => void;
+  onAddItem: () => void;
+  onDeleteItem: (id: number) => void;
+}) {
+  if (!tx) return null;
+
+  const categoryBreakdown = items.reduce(
+    (acc, item) => {
+      acc[item.category] = (acc[item.category] || 0) + item.amount;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 bg-black/30 z-40 transition-opacity"
+        style={{ opacity: tx ? 1 : 0, pointerEvents: tx ? "auto" : "none" }}
+      />
+
+      {/* Bottom Sheet */}
+      <div
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm bg-white rounded-t-3xl shadow-2xl z-50 transition-transform duration-300 overflow-hidden flex flex-col max-h-[80vh]"
+        style={{
+          transform: tx ? "translateY(0)" : "translateY(100%)",
+          width: "min(375px, 100vw)",
+        }}
+      >
+        {/* Handle bar */}
+        <div className="flex justify-center pt-3 pb-4 shrink-0">
+          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+        </div>
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700 z-10"
+        >
+          ✕
+        </button>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-5 pb-5">
+          {/* Store name & amount */}
+          <div className="mb-6">
+            <h2
+              style={{ fontFamily: "Arimo, sans-serif" }}
+              className="text-2xl font-bold text-[#101828]"
+            >
+              {tx.name}
+            </h2>
+            <p
+              style={{ fontFamily: "Arimo, sans-serif" }}
+              className="text-sm text-gray-500 mt-1"
+            >
+              {tx.fullDate}
+            </p>
+            <p
+              style={{ fontFamily: "Arimo, sans-serif" }}
+              className="text-3xl font-bold text-[#101828] mt-4"
+            >
+              €{totalAmount.toFixed(2)}
+            </p>
+          </div>
+
+          {/* Category Breakdown Pie Chart */}
+          {Object.keys(categoryBreakdown).length > 0 && (
+            <div className="mb-8 bg-gray-50 rounded-lg p-4">
+              <h3
+                style={{ fontFamily: "Inter, sans-serif" }}
+                className="text-sm font-semibold text-[#101828] mb-4"
+              >
+                Category Breakdown
+              </h3>
+              <div className="flex items-center gap-4">
+                <PieChart data={categoryBreakdown} size={100} />
+                <div className="flex flex-col gap-2 flex-1">
+                  {Object.entries(categoryBreakdown).map(([cat, amount]) => (
+                    <div key={cat} className="flex items-center gap-2">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ background: CATEGORY_COLORS[cat] || "#99A1AF" }}
+                      />
+                      <span
+                        style={{ fontFamily: "Inter, sans-serif" }}
+                        className="text-xs text-gray-600"
+                      >
+                        {cat}: €{amount.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Items list */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3
+                style={{ fontFamily: "Inter, sans-serif" }}
+                className="text-sm font-semibold text-[#101828]"
+              >
+                Items
+              </h3>
+              <button
+                onClick={onAddItem}
+                className="text-brand-green text-sm font-semibold hover:opacity-80"
+              >
+                + Add
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 bg-gray-50 rounded-lg p-3"
+                >
+                  <div className="flex-1">
+                    <p
+                      style={{ fontFamily: "Inter, sans-serif" }}
+                      className="text-sm font-medium text-[#101828]"
+                    >
+                      {item.name}
+                    </p>
+                    <p
+                      style={{ fontFamily: "Inter, sans-serif" }}
+                      className="text-xs text-gray-500"
+                    >
+                      {item.category}
+                    </p>
+                  </div>
+                  <p
+                    style={{ fontFamily: "Arimo, sans-serif" }}
+                    className="text-sm font-semibold text-[#101828]"
+                  >
+                    €{item.amount.toFixed(2)}
+                  </p>
+                  <button
+                    onClick={() => onDeleteItem(item.id)}
+                    className="text-gray-400 hover:text-red-500 text-lg"
+                  >
+                    🗑
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────── Add Item Modal ─────────────────── */
+function AddItemModal({
+  form,
+  onChange,
+  onAdd,
+  onCancel,
+}: {
+  form: { name: string; amount: string; category: string };
+  onChange: (form: { name: string; amount: string; category: string }) => void;
+  onAdd: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onCancel}
+        className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center"
+      >
+        {/* Modal */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="w-full sm:w-96 bg-white rounded-t-3xl sm:rounded-lg p-6 shadow-2xl"
+          style={{ width: "min(375px, 100vw)" }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h2
+              style={{ fontFamily: "Inter, sans-serif" }}
+              className="text-lg font-semibold text-[#101828]"
+            >
+              Add Item
+            </h2>
+            <button
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Form */}
+          <div className="flex flex-col gap-4 mb-6">
+            {/* Item Name */}
+            <div>
+              <label
+                style={{ fontFamily: "Inter, sans-serif" }}
+                className="text-sm font-medium text-[#101828] block mb-2"
+              >
+                Item Name
+              </label>
+              <input
+                type="text"
+                placeholder="Enter item name"
+                value={form.name}
+                onChange={(e) => onChange({ ...form, name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
+                style={{ fontFamily: "Inter, sans-serif" }}
+              />
+            </div>
+
+            {/* Amount */}
+            <div>
+              <label
+                style={{ fontFamily: "Inter, sans-serif" }}
+                className="text-sm font-medium text-[#101828] block mb-2"
+              >
+                Amount (€)
+              </label>
+              <input
+                type="number"
+                placeholder="0.00"
+                value={form.amount}
+                onChange={(e) => onChange({ ...form, amount: e.target.value })}
+                step="0.01"
+                min="0"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
+                style={{ fontFamily: "Inter, sans-serif" }}
+              />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label
+                style={{ fontFamily: "Inter, sans-serif" }}
+                className="text-sm font-medium text-[#101828] block mb-2"
+              >
+                Category
+              </label>
+              <select
+                value={form.category}
+                onChange={(e) => onChange({ ...form, category: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
+                style={{ fontFamily: "Inter, sans-serif" }}
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onAdd}
+              disabled={!form.name || !form.amount}
+              className="flex-1 px-4 py-2 bg-brand-green text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────── Pie Chart Component ─────────────────── */
+function PieChart({
+  data,
+  size = 100,
+}: {
+  data: Record<string, number>;
+  size?: number;
+}) {
+  const total = Object.values(data).reduce((a, b) => a + b, 0);
+  const entries = Object.entries(data);
+  let currentAngle = -Math.PI / 2;
+
+  const slices = entries.map(([category, value], idx) => {
+    const sliceAngle = (value / total) * 2 * Math.PI;
+    const startAngle = currentAngle;
+    const endAngle = currentAngle + sliceAngle;
+
+    const x1 = size / 2 + (size / 2 - 8) * Math.cos(startAngle);
+    const y1 = size / 2 + (size / 2 - 8) * Math.sin(startAngle);
+    const x2 = size / 2 + (size / 2 - 8) * Math.cos(endAngle);
+    const y2 = size / 2 + (size / 2 - 8) * Math.sin(endAngle);
+
+    const largeArc = sliceAngle > Math.PI ? 1 : 0;
+    const pathData = [
+      `M ${size / 2} ${size / 2}`,
+      `L ${x1} ${y1}`,
+      `A ${size / 2 - 8} ${size / 2 - 8} 0 ${largeArc} 1 ${x2} ${y2}`,
+      "Z",
+    ].join(" ");
+
+    currentAngle = endAngle;
+
+    return (
+      <path
+        key={category}
+        d={pathData}
+        fill={CATEGORY_COLORS[category] || "#99A1AF"}
+        stroke="white"
+        strokeWidth="2"
+      />
+    );
+  });
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {slices}
+      <circle cx={size / 2} cy={size / 2} r={size / 3} fill="white" />
+    </svg>
+  );
+}
+
 /* ─────────────────── Bottom Navigation ─────────────────── */
 function BottomNav({
   active,
